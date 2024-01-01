@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "371941916373",
+    "project_id": "ocr-demo-394b5",
+    "storage_bucket": "ocr-demo-394b5.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:371941916373:android:6e918f77e23094e1bfec5c",
+        "android_client_info": {
+          "package_name": "com.pandey.shubham.ocrdemoapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCzgXtlGXrjexixYZtW4oNQJV5lcCgFaR0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

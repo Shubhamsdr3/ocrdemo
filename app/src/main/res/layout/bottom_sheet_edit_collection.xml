@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tv_collection"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Collections"
+        android:textSize="20dp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/ll_collections"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:gravity="start"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_collection" />
+
+    <androidx.appcompat.widget.AppCompatEditText
+        android:id="@+id/et_collections"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/rect_border"
+        android:hint="Add a node"
+        android:padding="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_collection" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tv_select"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="Select and option or create one"
+        android:textColor="@android:color/darker_gray"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/et_collections" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_items"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_select" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btn_done"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="12dp"
+        android:backgroundTint="@android:color/black"
+        android:text="Done"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/rv_items" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

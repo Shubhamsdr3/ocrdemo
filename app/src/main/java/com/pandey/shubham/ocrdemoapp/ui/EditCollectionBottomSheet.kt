@@ -1,4 +1,4 @@
-package com.pandey.shubham.ocrdemoapp
+package com.pandey.shubham.ocrdemoapp.ui
 
 import android.content.Context
 import android.graphics.Rect
@@ -6,19 +6,16 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
-import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.os.bundleOf
-import androidx.core.widget.addTextChangedListener
-import androidx.core.widget.doOnTextChanged
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.flexbox.FlexDirection
 import com.google.android.flexbox.FlexboxLayoutManager
 import com.google.android.flexbox.JustifyContent
-import com.google.android.gms.common.internal.Asserts.checkMainThread
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.pandey.shubham.ocrdemoapp.callbacks.EditBottomSheetCallback
+import com.pandey.shubham.ocrdemoapp.R
 import com.pandey.shubham.ocrdemoapp.databinding.BottomSheetEditCollectionBinding
 import com.pandey.shubham.ocrdemoapp.viewmodel.ImageListViewModel
 import com.pandey.shubham.ocrdemoapp.viewmodel.ImageListViewModelFactory
@@ -26,15 +23,9 @@ import com.pandey.shubham.textChanges
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.launch
 import java.lang.IllegalArgumentException
 import kotlin.coroutines.CoroutineContext
 

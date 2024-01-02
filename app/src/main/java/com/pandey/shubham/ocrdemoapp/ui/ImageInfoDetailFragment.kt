@@ -1,4 +1,4 @@
-package com.pandey.shubham.ocrdemoapp
+package com.pandey.shubham.ocrdemoapp.ui
 
 import android.content.Context
 import android.graphics.Rect
@@ -7,39 +7,37 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.os.bundleOf
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.flexbox.FlexDirection
 import com.google.android.flexbox.FlexboxLayoutManager
 import com.google.android.flexbox.JustifyContent
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.pandey.shubham.data.ImageInfo
-import com.pandey.shubham.ocrdemoapp.databinding.BottomSheetImageDescriptionBinding
-import com.pandey.shubham.ocrdemoapp.viewmodel.ImageListViewModel
-import com.pandey.shubham.ocrdemoapp.viewmodel.ImageListViewModelFactory
+import com.pandey.shubham.ocrdemoapp.R
+import com.pandey.shubham.ocrdemoapp.callbacks.EditBottomSheetCallback
+import com.pandey.shubham.ocrdemoapp.callbacks.ImageDetailCallback
+import com.pandey.shubham.ocrdemoapp.databinding.FragmentImageInfoBinding
 
 /**
  * Created by shubhampandey
  */
-class ImageDescriptionBottomSheet: BottomSheetDialogFragment(), EditBottomSheetCallback {
+class ImageInfoDetailFragment : Fragment(), EditBottomSheetCallback {
 
-    private lateinit var binding: BottomSheetImageDescriptionBinding
-
-    private val imageInfo: ImageInfo? by lazy { arguments?.getParcelable(IMAGE_INFO) }
+    private lateinit var binding: FragmentImageInfoBinding
 
     private lateinit var callback: ImageDetailCallback
 
-    private lateinit var viewModel: ImageListViewModel
+    private var imageInfo: ImageInfo? = null
+
+    private val updatedCollections = mutableListOf<String>()
 
     private val adapter: CollectionAdapter by lazy { CollectionAdapter() }
 
-    private val collectionList = mutableListOf<String>()
-
     companion object {
-        const val TAG = "ImageDescriptionBottomSheet"
-        private const val IMAGE_INFO = "image_info"
+        const val TAG = "ImageInfoDetailFragment"
 
-        fun newInstance(imageInfo: ImageInfo) = ImageDescriptionBottomSheet().apply {
+        private const val IMAGE_INFO = "image_info"
+        fun newInstance(imageInfo: ImageInfo) = ImageInfoDetailFragment().apply {
             arguments = bundleOf(Pair(IMAGE_INFO, imageInfo))
         }
     }
@@ -54,46 +52,19 @@ class ImageDescriptionBottomSheet: BottomSheetDialogFragment(), EditBottomSheetC
             throw IllegalStateException("$context must implement fragment")
         }
     }
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        binding = BottomSheetImageDescriptionBinding.inflate(inflater, container, false)
+        binding = FragmentImageInfoBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel = ViewModelProvider(viewModelStore, ImageListViewModelFactory())[ImageListViewModel::class.java]
-        setupView()
-        setupListener()
-        setupObserver()
+        imageInfo = arguments?.getParcelable(IMAGE_INFO) as ImageInfo?
+        setupDetailView(imageInfo)
+        setUpListener()
     }
 
-    private fun setupObserver() {
-        viewModel.collectionLiveData.observe(viewLifecycleOwner) { state ->
-            onImageListViewStateChanged(state)
-        }
-    }
-
-    private fun onImageListViewStateChanged(state: ImageListViewState?) {
-        when(state) {
-            is ImageListViewState.UpdateCollection -> updateCollection(state.newCollection)
-            else -> {
-
-            }
-        }
-    }
-
-    private fun updateCollection(newCollection: List<String>) {
-        adapter.updateItems(newCollection)
-    }
-
-    private fun setupListener() {
-        binding.tvEdit.setOnClickListener {
-            callback.onEditClicked(imageInfo?.collections)
-        }
-    }
-
-    private fun setupView() {
+    private fun setupDetailView(imageInfo: ImageInfo?) {
         imageInfo?.run {
             configureCollections(collections)
             configureDescription(description)
@@ -112,6 +83,7 @@ class ImageDescriptionBottomSheet: BottomSheetDialogFragment(), EditBottomSheetC
 
     private fun configureCollections(collections: List<String>?) {
         if (collections.isNullOrEmpty()) return
+        updatedCollections.addAll(collections)
         binding.rvCollections.visibility = View.VISIBLE
         binding.tvCollections.visibility = View.VISIBLE
         val layoutManager = FlexboxLayoutManager(requireContext()).apply {
@@ -120,7 +92,7 @@ class ImageDescriptionBottomSheet: BottomSheetDialogFragment(), EditBottomSheetC
         }
         binding.rvCollections.layoutManager = layoutManager
         binding.rvCollections.adapter = adapter
-        adapter.updateItems(collections);
+        adapter.updateItems(collections)
         binding.rvCollections.addItemDecoration(object : RecyclerView.ItemDecoration() {
             override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
                 outRect.left = requireContext().resources.getDimensionPixelOffset(R.dimen.dimen_10)
@@ -129,8 +101,14 @@ class ImageDescriptionBottomSheet: BottomSheetDialogFragment(), EditBottomSheetC
         })
     }
 
+    private fun setUpListener() {
+        binding.tvEdit.setOnClickListener {
+            EditCollectionBottomSheet.newInstance(imageInfo?.collections).show(childFragmentManager, EditCollectionBottomSheet.TAG)
+        }
+    }
+
     override fun onCollectionSelected(collections: List<String>) {
-        collectionList.addAll(collections)
-        adapter.updateItems(collectionList)
+        updatedCollections.addAll(collections)
+        adapter.updateItems(updatedCollections)
     }
 }

@@ -1,4 +1,4 @@
-package com.pandey.shubham.ocrdemoapp
+package com.pandey.shubham.ocrdemoapp.callbacks
 
 /**
  * Created by shubhampandey

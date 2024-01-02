@@ -1,9 +1,10 @@
-package com.pandey.shubham.ocrdemoapp
+package com.pandey.shubham.ocrdemoapp.ui
 
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.pandey.shubham.ocrdemoapp.callbacks.ImageAdapterCallback
 import com.pandey.shubham.ocrdemoapp.databinding.ItemImageViewBinding
 
 /**

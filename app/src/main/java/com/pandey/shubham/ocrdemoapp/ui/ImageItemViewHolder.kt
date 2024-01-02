@@ -1,4 +1,4 @@
-package com.pandey.shubham.ocrdemoapp
+package com.pandey.shubham.ocrdemoapp.ui
 
 import android.net.Uri
 import androidx.recyclerview.widget.RecyclerView

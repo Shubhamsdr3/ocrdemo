@@ -1,13 +1,12 @@
-package com.pandey.shubham.ocrdemoapp
+package com.pandey.shubham.ocrdemoapp.ui
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
-import android.util.Log
 import android.util.SparseIntArray
 import android.view.LayoutInflater
 import android.view.Surface
@@ -17,19 +16,24 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
-import com.google.firebase.ml.vision.text.FirebaseVisionText
 import com.pandey.shubham.data.ImageInfo
+import com.pandey.shubham.ocrdemoapp.callbacks.ImageAdapterCallback
+import com.pandey.shubham.ocrdemoapp.callbacks.ImageDetailCallback
 import com.pandey.shubham.ocrdemoapp.databinding.FragmentImageListBinding
+import com.pandey.shubham.ocrdemoapp.viewmodel.ImageListViewModel
+import com.pandey.shubham.ocrdemoapp.viewmodel.ImageListViewModelFactory
+import com.pandey.shubham.ocrdemoapp.viewstate.ImageListViewState
 
 
 /**
  * Created by shubhampandey
  */
-class ImageListFragment: Fragment(), ImageAdapterCallback, ImageDetailCallback , EditBottomSheetCallback {
+class ImageListFragment: Fragment(), ImageAdapterCallback, ImageDetailCallback {
 
     private lateinit var binding: FragmentImageListBinding
 
@@ -37,7 +41,9 @@ class ImageListFragment: Fragment(), ImageAdapterCallback, ImageDetailCallback ,
 
     private val ORIENTATIONS = SparseIntArray()
 
-    private val collectionList = mutableListOf<String>()
+    private lateinit var viewModel: ImageListViewModel
+
+    private lateinit var callback: ImageDetailCallback
 
     init {
         ORIENTATIONS.append(Surface.ROTATION_0, 90)
@@ -79,6 +85,18 @@ class ImageListFragment: Fragment(), ImageAdapterCallback, ImageDetailCallback ,
         fun newInstance() = ImageListFragment()
     }
 
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if (parentFragment != null && parentFragment is ImageDetailCallback) {
+            this.callback = parentFragment as ImageDetailCallback
+        } else if (context is ImageDetailCallback) {
+            this.callback = context
+        } else {
+            throw IllegalStateException("$context must implement fragment")
+        }
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         binding = FragmentImageListBinding.inflate(inflater, container, false)
         return binding.root
@@ -86,13 +104,41 @@ class ImageListFragment: Fragment(), ImageAdapterCallback, ImageDetailCallback ,
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.btOpenGallery.setOnClickListener {
-            if (isPermissionGranted()) {
-                openGallery()
-            } else {
-                requestPermissionLauncher.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+        viewModel = ViewModelProvider(viewModelStore, ImageListViewModelFactory())[ImageListViewModel::class.java]
+        viewModel.collectionLiveData.observe(viewLifecycleOwner) {state -> onViewStateChanged(state) }
+        if (isPermissionGranted()) {
+            openGallery()
+        } else {
+            requestPermissionLauncher.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+    }
+
+    private fun onViewStateChanged(state: ImageListViewState?) {
+        when(state) {
+            is ImageListViewState.ShowLoader -> showLoaderDialog()
+            is ImageListViewState.HideLoader -> hideLoader()
+            is ImageListViewState.ShowError -> showError(state.error)
+            is  ImageListViewState.ShowDetailScreen -> showDetailScreen(state.imageInfo)
+            else -> {
+                // do nothing
             }
         }
+    }
+
+    private fun showDetailScreen(imageInfo: ImageInfo) {
+        openDetailBottomSheet(imageInfo)
+    }
+
+    private fun showError(error: Throwable?) {
+        binding.ivLoader.visibility = View.GONE
+    }
+
+    private fun hideLoader() {
+        binding.ivLoader.visibility = View.GONE
+    }
+
+    private fun showLoaderDialog() {
+        binding.ivLoader.visibility = View.VISIBLE
     }
 
     private fun setAdapter() {
@@ -100,6 +146,7 @@ class ImageListFragment: Fragment(), ImageAdapterCallback, ImageDetailCallback ,
             layoutManager = LinearLayoutManager(context, RecyclerView.HORIZONTAL, false)
             adapter = ImageListAdapter(imageList, this@ImageListFragment)
         }
+        onImageClicked(imageList[0])
     }
 
     private fun openGallery() {
@@ -113,45 +160,32 @@ class ImageListFragment: Fragment(), ImageAdapterCallback, ImageDetailCallback ,
         }
     }
 
-    private fun scanFile(path: String) {
-        MediaScannerConnection.scanFile(requireContext(), arrayOf(path), null) { path, uri -> run {
-                Log.i("TAG", "Finished scanning $path")
-            }
-        }
-    }
-
     private fun isPermissionGranted(): Boolean {
         return ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
     }
 
     override fun onImageClicked(imageUri: Uri) {
+        viewModel.showLoader()
         binding.ivPreview.setImageURI(imageUri)
         val bitmap = MediaStore.Images.Media.getBitmap(activity?.contentResolver, imageUri)
         val mediaImage = FirebaseVisionImage.fromBitmap(bitmap)
         val detector = FirebaseVision.getInstance().onDeviceTextRecognizer
         detector.processImage(mediaImage)
             .addOnSuccessListener { result ->
-                val resultText = result.text
-                openDetailBottomSheet(result)
+                viewModel.hideLoader()
+                viewModel.onImageProcess(result)
             }
-            .addOnFailureListener { e ->
-                print(e)
+            .addOnFailureListener { error ->
+                viewModel.hideLoader()
+                viewModel.showError(error)
             }
     }
 
-    private fun openDetailBottomSheet(result: FirebaseVisionText?) {
-        val imageInfo = ImageInfo(
-            collections = listOf("Animal", "Rabbit", "Elephant", "Horse"),
-            description = "This is description.."
-        )
+    private fun openDetailBottomSheet(imageInfo: ImageInfo) {
         ImageDescriptionBottomSheet.newInstance(imageInfo).show(childFragmentManager, ImageDescriptionBottomSheet.TAG)
     }
 
-    override fun onEditClicked(collection: List<String>?) {
-        EditCollectionBottomSheet.newInstance(collection).show(childFragmentManager, EditCollectionBottomSheet.TAG)
-    }
-
-    override fun onCollectionSelected(collections: List<String>) {
-        collectionList.addAll(collections)
+    override fun onShowDetailClicked(imageInfo: ImageInfo?) {
+        callback.onShowDetailClicked(imageInfo)
     }
 }

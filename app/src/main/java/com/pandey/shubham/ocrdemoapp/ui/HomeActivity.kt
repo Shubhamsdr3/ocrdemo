@@ -18,16 +18,21 @@ class HomeActivity : AppCompatActivity(), ImageDetailCallback {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.btOpenGallery.setOnClickListener {
-            loadFragment(savedInstanceState)
+            loadFragment(savedInstanceState, true)
+        }
+
+        binding.btFile.setOnClickListener {
+            loadFragment(savedInstanceState, false)
         }
     }
 
-    private fun loadFragment(savedInstanceState: Bundle?) {
+    private fun loadFragment(savedInstanceState: Bundle?, fromGallery: Boolean) {
         binding.btOpenGallery.visibility = View.GONE
+        binding.btFile.visibility = View.GONE
         if (savedInstanceState == null) {
             supportFragmentManager
                 .beginTransaction()
-                .add(R.id.fragment_container, ImageListFragment.newInstance(), ImageListFragment.TAG)
+                .add(R.id.fragment_container, ImageListFragment.newInstance(fromGallery), ImageListFragment.TAG)
                 .commitAllowingStateLoss()
         }
     }

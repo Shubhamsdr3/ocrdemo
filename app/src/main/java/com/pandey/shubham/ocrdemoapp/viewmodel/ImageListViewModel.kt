@@ -1,5 +1,7 @@
 package com.pandey.shubham.ocrdemoapp.viewmodel
 
+import android.net.Uri
+import androidx.core.net.toUri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -7,9 +9,11 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.ml.vision.text.FirebaseVisionText
 import com.pandey.shubham.data.ImageInfo
 import com.pandey.shubham.ocrdemoapp.viewstate.ImageListViewState
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.IOException
+
 
 /**
  * Created by shubhampandey
@@ -22,6 +26,25 @@ class ImageListViewModel: ViewModel() {
 
     fun addCollections(newCollections: List<String>) {
         _collectionsMutableLiveData.value = ImageListViewState.UpdateCollection(newCollections)
+    }
+
+    private val imagePathList = mutableListOf<Uri>()
+
+    fun getFromSdcard() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _collectionsMutableLiveData.postValue(ImageListViewState.ShowLoader)
+            try {
+                val folder = File("/storage/emulated/0/sceenshots")
+                folder.listFiles { dir, name ->
+                    name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png")
+                }?.forEach {
+                    imagePathList.add(it.toUri())
+                }
+                _collectionsMutableLiveData.postValue(ImageListViewState.ShowImage(imagePathList))
+            } catch (ex: IOException) {
+                _collectionsMutableLiveData.postValue(ImageListViewState.ShowError(ex))
+            }
+        }
     }
 
     fun onImageProcess(result: FirebaseVisionText?) {

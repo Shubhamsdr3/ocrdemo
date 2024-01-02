@@ -3,6 +3,7 @@ package com.pandey.shubham.ocrdemoapp.ui
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import android.window.OnBackInvokedDispatcher
 import com.pandey.shubham.data.ImageInfo
 import com.pandey.shubham.ocrdemoapp.R
 import com.pandey.shubham.ocrdemoapp.callbacks.ImageDetailCallback
@@ -28,6 +29,15 @@ class HomeActivity : AppCompatActivity(), ImageDetailCallback {
                 .beginTransaction()
                 .add(R.id.fragment_container, ImageListFragment.newInstance(), ImageListFragment.TAG)
                 .commitAllowingStateLoss()
+        }
+    }
+
+    override fun onBackPressed() {
+        val count = supportFragmentManager.backStackEntryCount
+        if (count > 0) {
+            supportFragmentManager.popBackStackImmediate()
+        } else {
+            super.onBackPressed()
         }
     }
 

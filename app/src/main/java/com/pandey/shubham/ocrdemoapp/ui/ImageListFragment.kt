@@ -37,8 +37,6 @@ class ImageListFragment: Fragment(), ImageAdapterCallback, ImageDetailCallback {
 
     private lateinit var binding: FragmentImageListBinding
 
-    private val imageList = mutableListOf<Uri>()
-
     private val ORIENTATIONS = SparseIntArray()
 
     private lateinit var viewModel: ImageListViewModel
@@ -52,27 +50,9 @@ class ImageListFragment: Fragment(), ImageAdapterCallback, ImageDetailCallback {
         ORIENTATIONS.append(Surface.ROTATION_270, 180)
     }
 
-    private val chosePictureLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            if (null != result.data) {
-                if (null != result.data?.clipData) {
-                    val count = result.data?.clipData?.itemCount ?: 0
-                    for (i in 0 until Math.min(count, 10)) {
-                        val uri = result.data?.clipData?.getItemAt(i)?.uri
-                        uri?.let { imageList.add(it) }
-                    }
-                } else {
-                    val uri = result?.data?.data
-                    uri?.let { imageList.add(it) }
-                }
-            }
-            setAdapter()
-        }
-    };
-
     private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (isGranted) {
-                openGallery()
+                viewModel.getFromSdcard()
             } else {
                 Toast.makeText(context, "Please provide the permission", Toast.LENGTH_SHORT).show()
             }
@@ -107,7 +87,7 @@ class ImageListFragment: Fragment(), ImageAdapterCallback, ImageDetailCallback {
         viewModel = ViewModelProvider(viewModelStore, ImageListViewModelFactory())[ImageListViewModel::class.java]
         viewModel.collectionLiveData.observe(viewLifecycleOwner) {state -> onViewStateChanged(state) }
         if (isPermissionGranted()) {
-            openGallery()
+            viewModel.getFromSdcard()
         } else {
             requestPermissionLauncher.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
         }
@@ -118,11 +98,20 @@ class ImageListFragment: Fragment(), ImageAdapterCallback, ImageDetailCallback {
             is ImageListViewState.ShowLoader -> showLoaderDialog()
             is ImageListViewState.HideLoader -> hideLoader()
             is ImageListViewState.ShowError -> showError(state.error)
-            is  ImageListViewState.ShowDetailScreen -> showDetailScreen(state.imageInfo)
+            is ImageListViewState.ShowDetailScreen -> showDetailScreen(state.imageInfo)
+            is ImageListViewState.ShowImage -> showImages(state.imagePaths)
             else -> {
                 // do nothing
             }
         }
+    }
+
+    private fun showImages(imagePaths: List<Uri>) {
+        binding.rvImage.apply {
+            layoutManager = LinearLayoutManager(context, RecyclerView.HORIZONTAL, false)
+            adapter = ImageListAdapter(imagePaths, this@ImageListFragment)
+        }
+        onImageClicked(imagePaths[0])
     }
 
     private fun showDetailScreen(imageInfo: ImageInfo) {
@@ -139,25 +128,6 @@ class ImageListFragment: Fragment(), ImageAdapterCallback, ImageDetailCallback {
 
     private fun showLoaderDialog() {
         binding.ivLoader.visibility = View.VISIBLE
-    }
-
-    private fun setAdapter() {
-        binding.rvImage.apply {
-            layoutManager = LinearLayoutManager(context, RecyclerView.HORIZONTAL, false)
-            adapter = ImageListAdapter(imageList, this@ImageListFragment)
-        }
-        onImageClicked(imageList[0])
-    }
-
-    private fun openGallery() {
-        Intent(Intent.ACTION_PICK).apply {
-            type = "image/*"
-            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-            action = Intent.ACTION_OPEN_DOCUMENT
-            addCategory(Intent.CATEGORY_OPENABLE)
-        }.also {
-            chosePictureLauncher.launch(it)
-        }
     }
 
     private fun isPermissionGranted(): Boolean {
